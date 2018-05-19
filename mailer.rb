@@ -98,7 +98,18 @@ class Mailer
   
   
   def generate_open_pull_email(event,data)
-  
+    pr_num      = data["number"]
+    pr_link     = data["pull_request"]["html_url"]
+    df_link     = data["pull_request"]["diff_url"]
+    subject     = "New pull request (#"+pr_num+") opened on "+ENV["REPO_NAME"]
+    body        = "<h2>New pull request (#"+pr_num+") opened on "+ENV["REPO_NAME"]+"</h2>"
+    body = body + "<a href=\""+pr_link+"\">Click here to view the pull request</a><br>"
+    body = body + "<a href=\""+df_link+"\">Click here to view the code diff</a><br>"
+    body = body + "<a href=\""+patch_link+"\">Click here to obtain a patch file</a><br>"
+    body = body + "<br>Opened by: <a href=\""+data["user"]["html_url"]+"\">"+data["user"]["login"]+"</a><br>"
+    body = body + "Merge changes from "+data["head"]["ref"]+" to "+data["base"]["ref"]+"<br>"
+    body = body + "<b>Description</b><br>"+data["body"]
+    send_mail(subject,body)
   end
   
   
