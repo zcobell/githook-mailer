@@ -208,6 +208,6 @@ class Mailer
                   :authentication         => :plain,
                   :enable_starttls_auto   => use_ssl
                 }
-  end
+    end
 
 end

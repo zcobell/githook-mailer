@@ -19,7 +19,7 @@
 #-----------------------------------------------------------------------#
 ruby '2.5.1'
 
-# define our source to loook for gems
+# define our source to look for gems
 source "http://rubygems.org/"
 
 # declare the sinatra dependency
