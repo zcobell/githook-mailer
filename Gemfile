@@ -31,7 +31,7 @@ group :test do
 end
 
 # require a relative gem version
-gem "i18n", "~> 0.4.1"
+gem "i18n", "~> 0.6.6"
 
 # Pony email
 gem "pony"
