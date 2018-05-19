@@ -29,9 +29,10 @@ end
 
 post '/githook' do
     event_type = request.env['HTTP_X_GITHUB_EVENT']
-    post_body  = JSON.parse(request.body.read)
-
-    m = Mailer.new
-    m.send(event_type,post_body)
+    unless event_type.nil?
+        post_body  = JSON.parse(request.body.read)
+        m = Mailer.new
+        m.send(event_type,post_body)
+    end
 end
 
