@@ -22,6 +22,11 @@ require 'json'
 require 'rubygems'
 require './mailer'
 
+set :public_folder,'public'
+get "/" do
+    redirect "index.html"
+end
+
 post '/githook' do
     event_type = request.env['HTTP_X_GITHUB_EVENT']
     post_body  = JSON.parse(request.body.read)
