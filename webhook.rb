@@ -20,7 +20,6 @@
 require 'sinatra'
 require 'json'
 require 'rubygems'
-require 'pony'
 require './mailer'
 
 post '/githook' do
