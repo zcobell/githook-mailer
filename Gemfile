@@ -30,8 +30,6 @@ group :test do
   gem "rspec"
 end
 
-gem 'activesupport', '>=1.4'
-
 # require a relative gem version
 gem "i18n", "~> 0.4.1"
 
