@@ -1,7 +1,7 @@
 
 # Githook Mailer
 
-Githook Mailer is a Heroku application which distributes Git Webhooks to a user specified email address. In my case, this is a development group mailing list, though, it can be anything you'd like. This mostly replicates the normal emails that Github would sent to a watching user but the address where it is sent is arbitrary.
+Githook Mailer is a Ruby application which distributes Git Webhooks to a user specified email address. In my case, this is a development group mailing list, though, it can be anything you'd like. This mostly replicates the normal emails that Github would sent to a watching user but the address where it is sent is arbitrary.
 
 ## Under Construction
 This project is under construction, however, it is working for subsets of events currently.
