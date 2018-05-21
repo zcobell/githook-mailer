@@ -18,6 +18,8 @@
 #
 #-----------------------------------------------------------------------#
 require 'pony'
+require 'redcarpet'
+
 class Mailer
   def send(event_type,data)
   
@@ -81,7 +83,53 @@ class Mailer
   
   end
   
+  def send_mail(subject,body)
   
+    if ENV['EMAIL_SSL'] == 1
+      use_ssl = true
+    else
+      use_ssl = false
+    end
+  
+    Pony.mail :to      => ENV['EMAIL_TO'],
+              :from    => ENV['EMAIL_FROM'],
+              :subject =>  subject,
+              :headers => { 'Content-Type' => 'text/html' },
+              :body    =>  body,
+              :via     => :smtp,
+              :via_options => {
+                  :address                => ENV['EMAIL_SERVER'],
+                  :port                   => ENV['EMAIL_PORT'],
+                  :user_name              => ENV['EMAIL_USER'],
+                  :password               => ENV['EMAIL_PASSWORD'],
+                  :authentication         => :plain,
+                  :enable_starttls_auto   => use_ssl
+                }
+  end
+
+
+  def generate_create_email(event,data)
+    if data["ref_type"] == "branch"
+        reponame = data["repository"]["name"]
+        subject = "New branch "+data["ref"]+" created in "+reponame
+        body = "<h2>New branch "+data["ref"]+" created in "+reponame+"</h2>"
+        body = body+"Branch "+data["ref"]+" created by "+data["sender"]["login"]
+        send_mail(subject,body)
+    end
+  end
+
+
+  def generate_delete_email(event,data)
+    if data["ref_type"] == "branch"
+        reponame = data["repository"]["name"]
+        subject = "Branch "+data["ref"]+" deleted in "+reponame
+        body = "<h2>Branch "+data["ref"]+" deleted in "+reponame+"</h2>"
+        body = body+"Branch "+data["ref"]+" deleted by "+data["sender"]["login"]
+        send_mail(subject,body)
+    end
+  end
+
+
   def generate_pull_email(event,data)
   
       if data["action"] == "opened"
@@ -90,30 +138,49 @@ class Mailer
           generate_close_pull_email(event,data)
       elsif data["action"] == "reopened"
           generate_reopen_pull_email(event,data)
-      elsif data["action"] == "edited"
-          generate_edited_pull_email(event,data)
       end
   
   end
   
   
   def generate_open_pull_email(event,data)
-    pr_num      = data["number"]
+    renderer    = Redcarpet::Render::HTML.new(prettify:true,hard_wrap:true)
+    markdown    = Redcarpet::Markdown.new(renderer,tables:true,autolink:true,no_intra_emphasis:true)
+    reponame    = data["repository"]["name"]
+    pr_num      = data["pull_request"]["number"].to_s
     pr_link     = data["pull_request"]["html_url"]
     df_link     = data["pull_request"]["diff_url"]
-    subject     = "New pull request (#"+pr_num+") opened on "+ENV["REPO_NAME"]
-    body        = "<h2>New pull request (#"+pr_num+") opened on "+ENV["REPO_NAME"]+"</h2>"
-    body = body + "<a href=\""+pr_link+"\">Click here to view the pull request</a><br>"
-    body = body + "<a href=\""+df_link+"\">Click here to view the code diff</a><br>"
-    body = body + "<a href=\""+patch_link+"\">Click here to obtain a patch file</a><br>"
-    body = body + "<br>Opened by: <a href=\""+data["user"]["html_url"]+"\">"+data["user"]["login"]+"</a><br>"
-    body = body + "Merge changes from "+data["head"]["ref"]+" to "+data["base"]["ref"]+"<br>"
-    body = body + "<b>Description</b><br>"+data["body"]
+    patch_link  = data["pull_request"]["patch_url"]
+    subject     = "New pull request (#"+pr_num+") opened on "+reponame
+    body        = "<h2>New pull request (#"+pr_num+") opened on "+reponame+"</h2>"
+    body = body + "<a href=\""+pr_link+"\">View the pull request</a><br>"
+    body = body + "<a href=\""+df_link+"\">View the code diff</a><br>"
+    body = body + "<a href=\""+patch_link+"\">Obtain a patch file</a><br>"
+    body = body + "<br>Opened by: <a href=\""+data["pull_request"]["user"]["html_url"]+"\">"+\
+                  data["pull_request"]["user"]["login"]+"</a><br><br>"
+    body = body + "Merge changes from <b>"+data["pull_request"]["head"]["ref"]+"</b> into <b>"+\
+                  data["pull_request"]["base"]["ref"]+"</b><br>"
+    pr_description = markdown.render(data["pull_request"]["body"])
+    body = body + "<h3>Description</h3><br>"+pr_description
     send_mail(subject,body)
   end
   
   
   def generate_close_pull_email(event,data)
+    renderer = Redcarpet::Render::HTML.new(prettify:true,hard_wrap:true)
+    markdown = Redcarpet::Markdown.new(renderer,tables:true,autolink:true,no_intra_emphasis:true)
+    reponame    = data["repository"]["name"]
+    pr_num      = data["pull_request"]["number"].to_s
+    pr_link     = data["pull_request"]["html_url"]
+    df_link     = data["pull_request"]["diff_url"]
+    patch_link  = data["pull_request"]["patch_url"]
+    user        = data["pull_request"]["merged_by"]["login"]
+    
+    if data["pull_request"]["merged"]
+        subject = "Pull request (#"+pr_num+") merged on "+reponame
+        body    = "Pull request (#"+pr_num+") merged and closed on "+reponame+" by "+user+"<br>"
+        send_mail(subject,body)
+    end
   
   end
   
@@ -123,28 +190,53 @@ class Mailer
   end
   
   
-  def generate_edited_pull_email(event,data)
-  
+  def generate_issues_comment_email(event,data)
+    renderer = Redcarpet::Render::HTML.new(prettify:true,hard_wrap:true)
+    markdown = Redcarpet::Markdown.new(renderer,tables:true,autolink:true,no_intra_emphasis:true)
+    reponame = data["repository"]["name"]
+    num = data["issue"]["number"].to_s
+    user = data["comment"]["user"]["login"]
+    comment = data["comment"]["body"]
+
+    unless data["issue"]["pull_request"].nil?
+        subject = "Comment on pull request #"+num+" in "+reponame
+        body = "<h2>Comment on pull request #"+num+" in "+reponame+"</h2>"
+        body = body + "User: "+user+"<br><br>"
+        body = body + "<h3>Comment</h3>"+markdown.render(comment)
+        send_mail(subject,body)
+    end
+
   end
   
   
   def generate_push_email(event,data)
+
+     #...We capture the delete event
+     #   elsewhere, but github sends
+     #   two events 
+      unless data["deleted"].nil?
+        if data["deleted"]
+            return
+        end
+      end
   
       added = Array.new
       removed = Array.new
       modified = Array.new
+
+      reponame = data["repository"]["name"]
   
       branch = data["ref"].split("/")[2]
-      subject = "Commits pushed to "+ENV["REPO_NAME"]+"/"+branch
+      subject = "Commits pushed to "+reponame+"/"+branch
   
-      body = "<h2>Commits pushed to "+ENV["REPO_NAME"]+"/"+branch+"</h2>"+\
+      body = "<h2>Commits pushed to "+reponame+"/"+branch+"</h2>"+\
              "<a href=\""+data["compare"]+"\">Click here to view change set</a><br><br>
              <h3>Commit Summary</h3><ul>"
   
       data["commits"].each do |child|
           body = body + "<li><b>Commit Hash:</b> <a href=\""+child["url"]+"\">"+child["id"][0..6]+"</a>" + \
                 "<ul>" +
-                  "<li> <b>Author:</b> "+child["author"]["name"]+"</li>"+\
+                  "<li> <b>Author:</b> "+child["author"]["username"]+"</li>"+\
                   "<li> <b>Description:</b> "+child["message"]+"</li>"+\
                 "</ul>"
           unless child["added"].nil?
@@ -197,28 +289,5 @@ class Mailer
   
   end
   
-  def send_mail(subject,body)
-  
-    if ENV['EMAIL_SSL'] == 1
-      use_ssl = true
-    else
-      use_ssl = false
-    end
-  
-    Pony.mail :to      => ENV['EMAIL_TO'],
-              :from    => ENV['EMAIL_FROM'],
-              :subject =>  subject,
-              :headers => { 'Content-Type' => 'text/html' },
-              :body    =>  body,
-              :via     => :smtp,
-              :via_options => {
-                  :address                => ENV['EMAIL_SERVER'],
-                  :port                   => ENV['EMAIL_PORT'],
-                  :user_name              => ENV['EMAIL_USER'],
-                  :password               => ENV['EMAIL_PASSWORD'],
-                  :authentication         => :plain,
-                  :enable_starttls_auto   => use_ssl
-                }
-    end
 
 end

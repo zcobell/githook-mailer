@@ -28,7 +28,6 @@ The Heroku app should be completely configurable through the use of environment 
 |`EMAIL_SERVER`    | Mail server to use for sending mail            |
 |`EMAIL_PORT`      | Port to use for mail server                    |
 |`EMAIL_SSL`       | Set to 1 to use SSL, 0 to disable SSL          |
-|`REPO_NAME`       | Name of the repository. Used in email subject  |
 
 Environment variables are defined via Heroku using:
 ```
