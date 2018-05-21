@@ -27,3 +27,6 @@ gem "sinatra"
 
 # Pony email
 gem "pony"
+
+# Markdown to html
+gem "redcarpet"
