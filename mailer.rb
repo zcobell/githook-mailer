@@ -225,6 +225,7 @@ class Mailer
     else
         subject = "Comment on issue #"+num+" in "+reponame
         body = "<h2>Comment on issue #"+num+" in "+reponame+"</h2>"
+        body = body + "<b>Title:</b> "+data["issue"]["title"]+"<br>"
     end
     body = body + "<b>User:</b> "+user+"<br><br>"
     body = body + "<h3>Comment</h3>"+markdown.render(comment)
