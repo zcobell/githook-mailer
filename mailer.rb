@@ -222,6 +222,7 @@ class Mailer
     unless data["issue"]["pull_request"].nil?
         subject = "Comment on pull request #"+num+" in "+reponame
         body = "<h2>Comment on pull request #"+num+" in "+reponame+"</h2>"
+        body = body + "<b>Title:</b> "+data["issue"]["title"]+"<br>"
     else
         subject = "Comment on issue #"+num+" in "+reponame
         body = "<h2>Comment on issue #"+num+" in "+reponame+"</h2>"
