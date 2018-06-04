@@ -18,7 +18,7 @@ The Heroku app should be completely configurable through the use of environment 
 
 |  Variable Name   |                 Description                    |
 |------------------|------------------------------------------------|
-|`EMAIL_TO`        | Destination address                            |
+|`EMAIL_TO`        | Destination address. Send to multiple addresses by separating with a comma. |
 |`EMAIL_FROM`      | From address for the email being sent          |
 |`EMAIL_USER`      | Username of the email account to use           |
 |`EMAIL_PASSWORD`  | Password for specified email account           |
