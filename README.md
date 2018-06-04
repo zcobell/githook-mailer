@@ -3,9 +3,6 @@
 
 Githook Mailer is a Ruby application which distributes Git Webhooks to a user specified email address. In my case, this is a development group mailing list, though, it can be anything you'd like. This mostly replicates the normal emails that Github would send to a "watching" user but the address where the email is sent can be arbitrary.
 
-## Under Construction
-This project is under construction, however, it is working for subsets of events currently.
-
 ## Background
 Some people just prefer getting detailed emails instead of following along with projects on Github. For admins, this can present a challenge. Github doesn't really provide the ability to send out commit, issue, and pull request notifications to a mailing list. However, the webhooks api serves as a solution to this, provided you're willing to do a little work. Hopefully I've done that for you.
 
