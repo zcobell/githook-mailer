@@ -150,9 +150,11 @@ class Mailer
     pr_num      = data["pull_request"]["number"].to_s
     pr_link     = data["pull_request"]["html_url"]
     df_link     = data["pull_request"]["diff_url"]
+    pr_form     = "<a href=\""+pr_link+"\">#"+pr_num+"</a>"
     patch_link  = data["pull_request"]["patch_url"]
     subject     = "New pull request (#"+pr_num+") opened on "+reponame
-    body        = "<h2>New pull request (#"+pr_num+") opened on "+reponame+"</h2>"
+    body        = "<h2>New pull request (#"+pr_form+") opened on "+reponame+"</h2>"
+    body = body + "<h3>"+data["pull_request"]["title"]+"</h3>"
     body = body + "<a href=\""+pr_link+"\">View the pull request</a><br>"
     body = body + "<a href=\""+df_link+"\">View the code diff</a><br>"
     body = body + "<a href=\""+patch_link+"\">Obtain a patch file</a><br>"
@@ -161,24 +163,30 @@ class Mailer
     body = body + "Merge changes from <b>"+data["pull_request"]["head"]["ref"]+"</b> into <b>"+\
                   data["pull_request"]["base"]["ref"]+"</b><br>"
     pr_description = markdown.render(data["pull_request"]["body"])
-    body = body + "<h3>Description</h3><br>"+pr_description
+    body = body + "<h3>Description</h3>"+pr_description
     send_mail(subject,body)
   end
   
   
   def generate_close_pull_email(event,data)
-    renderer = Redcarpet::Render::HTML.new(prettify:true,hard_wrap:true)
-    markdown = Redcarpet::Markdown.new(renderer,tables:true,autolink:true,no_intra_emphasis:true)
     reponame    = data["repository"]["name"]
     pr_num      = data["pull_request"]["number"].to_s
     pr_link     = data["pull_request"]["html_url"]
     df_link     = data["pull_request"]["diff_url"]
     patch_link  = data["pull_request"]["patch_url"]
-    user        = data["pull_request"]["merged_by"]["login"]
+    pr_form     = "<a href=\""+pr_link+"\">#"+pr_num+"</a>"
     
     if data["pull_request"]["merged"]
+        user    = data["pull_request"]["merged_by"]["login"]
         subject = "Pull request (#"+pr_num+") merged on "+reponame
-        body    = "Pull request (#"+pr_num+") merged and closed on "+reponame+" by "+user+"<br>"
+        body    = "Pull request ("+pr_form+") merged and closed on "+reponame+" by "+user
+        body    = body + "<br><b>Title:</b> "+data["pull_request"]["title"]
+        send_mail(subject,body)
+    else
+        user    = data["pull_request"]["user"]["login"]
+        subject = "Pull request (#"+pr_num+") closed on "+reponame
+        body    = "Pull request ("+pr_form+") closed without merge on "+reponame+" by "+user
+        body = body + "<br><b>Title:</b> "+data["pull_request"]["title"]
         send_mail(subject,body)
     end
   
@@ -186,7 +194,20 @@ class Mailer
   
   
   def generate_reopen_pull_email(event,data)
-  
+    reponame    = data["repository"]["name"]
+    pr_num      = data["pull_request"]["number"].to_s
+    pr_link     = data["pull_request"]["html_url"]
+    df_link     = data["pull_request"]["diff_url"]
+    patch_link  = data["pull_request"]["patch_url"]
+    pr_form     = "<a href=\""+pr_link+"\">#"+pr_num+"</a>"
+    user        = data["pull_request"]["user"]["login"]
+    subject     = "Pull request (#"+pr_num+") reopened on "+reponame
+    body        = "Pull request ("+pr_form+") reopened on "+reponame+" by "+user+"<br>"
+    body        = body + "<br><b>Title:</b> "+data["pull_request"]["title"]+"<br><br>"
+    body        = body + "<a href=\""+pr_link+"\">View the pull request</a><br>"
+    body        = body + "<a href=\""+df_link+"\">View the code diff</a><br>"
+    body        = body + "<a href=\""+patch_link+"\">Obtain a patch file</a><br>"
+    send_mail(subject,body)
   end
   
   
@@ -201,14 +222,85 @@ class Mailer
     unless data["issue"]["pull_request"].nil?
         subject = "Comment on pull request #"+num+" in "+reponame
         body = "<h2>Comment on pull request #"+num+" in "+reponame+"</h2>"
-        body = body + "User: "+user+"<br><br>"
-        body = body + "<h3>Comment</h3>"+markdown.render(comment)
-        send_mail(subject,body)
+    else
+        subject = "Comment on issue #"+num+" in "+reponame
+        body = "<h2>Comment on issue #"+num+" in "+reponame+"</h2>"
     end
+    body = body + "<b>User:</b> "+user+"<br><br>"
+    body = body + "<h3>Comment</h3>"+markdown.render(comment)
+    send_mail(subject,body)
 
   end
+
+
+  def generate_issues_email(event,data)
+    if data["action"]=="opened"
+        generate_issues_opened_email(event,data)
+    elsif data["action"]=="closed"
+        generate_issues_closed_email(event,data)
+    elsif data["action"]=="reopened"
+        generate_issues_reopened_email(event,data)
+    end
+  end
+
+
+  def generate_issues_opened_email(event,data)
+    renderer = Redcarpet::Render::HTML.new(prettify:true,hard_wrap:true)
+    markdown = Redcarpet::Markdown.new(renderer,tables:true,autolink:true,no_intra_emphasis:true)
+    reponame = data["repository"]["name"]
+    title=data["issue"]["title"]
+    comment=data["issue"]["comment"]
+    num=data["issue"]["number"].to_s
+    url=data["issue"]["html_url"]
+    issue_form="<a href=\""+url+"\">#"+num+"</a>"
+
+    subject="New issue (#"+num+") opened in "+reponame
+    body        = "<h2>New issue ("+issue_form+") opened on "+reponame+"</h2>"
+    body = body + "<b>Opened by: </b><a href=\""+data["issue"]["user"]["html_url"]+"\">"+\
+                  data["issue"]["user"]["login"]+"</a><br>"
+    body = body + "<h3>Subject</h3>"+data["issue"]["title"]
+    description = markdown.render(data["issue"]["body"])
+    body = body + "<h3>Description</h3>"+description
+
+    send_mail(subject,body)
+
+  end
+
+
+  def generate_issues_closed_email(event,data)
+    reponame = data["repository"]["name"]
+    user=data["issue"]["user"]["login"]
+    title=data["issue"]["title"]
+    comment=data["issue"]["comment"]
+    num=data["issue"]["number"].to_s
+    url=data["issue"]["html_url"]
+    issue_form="<a href=\""+url+"\">#"+num+"</a>"
+    subject="Issue (#"+num+") closed in "+reponame
+    body = "<b>Title:</b> "+title
+    body = body+"<br><br>Issue ("+issue_form+") closed on "+reponame+" by "+user
   
+    send_mail(subject,body)
+
+  end 
+
   
+  def generate_issues_reopened_email(event,data)
+    reponame = data["repository"]["name"]
+    user=data["issue"]["user"]["login"]
+    title=data["issue"]["title"]
+    comment=data["issue"]["comment"]
+    num=data["issue"]["number"].to_s
+    url=data["issue"]["html_url"]
+    issue_form="<a href=\""+url+"\">#"+num+"</a>"
+    subject="Issue (#"+num+") reopened in "+reponame
+    body = "<b>Title:</b> "+title
+    body = body+"<br><br>Issue ("+issue_form+") reopened on "+reponame+" by "+user
+  
+    send_mail(subject,body)
+
+  end 
+
+
   def generate_push_email(event,data)
 
      #...We capture the delete event
