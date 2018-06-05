@@ -23,7 +23,7 @@ ruby '2.5.1'
 source "http://rubygems.org/"
 
 # declare the sinatra dependency
-gem "sinatra" 
+gem "sinatra", "~> 2.0.2"  
 
 # Pony email
 gem "pony"
