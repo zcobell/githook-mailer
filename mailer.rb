@@ -84,7 +84,11 @@ class Mailer
   end
   
   def send_mail(subject,body)
+
+    #...Adding a no-reply notice to the bottom of the email
+    body = body + "<br><br>Do not reply to this email. Use the github.com interface to interact."
   
+    #...Select SSL options
     if ENV['EMAIL_SSL'] == 1
       use_ssl = true
     else
