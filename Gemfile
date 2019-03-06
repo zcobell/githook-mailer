@@ -22,6 +22,9 @@ ruby '2.5.1'
 # define our source to look for gems
 source "http://rubygems.org/"
 
+# rack
+gem "rack", ">= 2.0.6"
+
 # declare the sinatra dependency
 gem "sinatra", "~> 2.0.2"  
 
