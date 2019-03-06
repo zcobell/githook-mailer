@@ -157,7 +157,7 @@ class Mailer
     pr_form     = "<a href=\""+pr_link+"\">#"+pr_num+"</a>"
     patch_link  = data["pull_request"]["patch_url"]
     subject     = "New pull request (#"+pr_num+") opened on "+reponame
-    body        = "<h2>New pull request (#"+pr_form+") opened on "+reponame+"</h2>"
+    body        = "<h2>New pull request ("+pr_form+") opened on "+reponame+"</h2>"
     body = body + "<h3>"+data["pull_request"]["title"]+"</h3>"
     body = body + "<a href=\""+pr_link+"\">View the pull request</a><br>"
     body = body + "<a href=\""+df_link+"\">View the code diff</a><br>"
